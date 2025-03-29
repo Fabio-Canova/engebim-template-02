@@ -1,0 +1,35 @@
+name: Run Python FBX Script
+
+on: [push, pull_request]  # O workflow será acionado em push e pull request
+
+jobs:
+  build:
+    runs-on: windows-latest  # Você pode escolher outro ambiente se preferir, como ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3  # Baixa o código do repositório
+
+      - name: Configurar ambiente virtual
+        run: |
+          python -m venv .venv  # Cria o ambiente virtual
+          .\.venv\Scripts\activate  # Ativa o ambiente virtual
+          python -m pip install --upgrade pip  # Atualiza o pip
+
+      - name: Copiar arquivos do FBX SDK para o ambiente virtual
+        run: |
+          xcopy /E /I /Y libs\fbx_sdk\release\* .venv\Lib\site-packages\
+
+      - name: Adicionar SDK ao PYTHONPATH
+        run: |
+          echo "set PYTHONPATH=%PYTHONPATH%;%CD%\libs\fbx_sdk\release" >> .venv\Scripts\activate.bat
+
+      - name: Instalar dependências do projeto
+        run: |
+          .\.venv\Scripts\activate  # Ativa o ambiente virtual
+          pip install -r requirements.txt  # Instala as dependências
+
+      - name: Testar importação do FBX SDK
+        run: |
+          .\.venv\Scripts\activate  # Ativa o ambiente virtual
+          python -c "import fbx; print(fbx.FbxManager.Create())"  # Testa se o SDK foi importado corretamente
